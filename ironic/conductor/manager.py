@@ -2589,13 +2589,14 @@ class ConductorManager(base_manager.BaseConductorManager):
         while not self._shutdown:
             try:
                 (node_uuid, driver, conductor_group,
-                 instance_uuid) = nodes.get_nowait()
+                 instance_uuid, lessee) = nodes.get_nowait()
             except queue.Empty:
                 break
             # populate the message which will be sent to ceilometer
             message = {'message_id': uuidutils.generate_uuid(),
                        'instance_uuid': instance_uuid,
                        'node_uuid': node_uuid,
+                       'project_id': lessee,
                        'timestamp': datetime.datetime.utcnow()}
 
             try:
@@ -2721,7 +2722,7 @@ class ConductorManager(base_manager.BaseConductorManager):
             filters['provision_state'] = states.ACTIVE
 
         nodes = queue.Queue()
-        for node_info in self.iter_nodes(fields=['instance_uuid'],
+        for node_info in self.iter_nodes(fields=['instance_uuid', 'lessee'],
                                          filters=filters):
             nodes.put_nowait(node_info)
 
